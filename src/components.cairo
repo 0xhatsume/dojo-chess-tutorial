@@ -1,54 +1,185 @@
+use debug::PrintTrait;
 use starknet::ContractAddress;
 
-#[derive(Component, Copy, Drop, Serde, SerdeLen)]
-struct Moves {
+#[derive(Component, Drop, SerdeLen, Serde)]
+struct Square {
     #[key]
-    player: ContractAddress,
-    remaining: u8,
-}
-
-#[derive(Component, Copy, Drop, Serde, SerdeLen)]
-struct Position {
+    game_id: felt252,
     #[key]
-    player: ContractAddress,
     x: u32,
-    y: u32
+    #[key]
+    y: u32,
+    piece: Option<PieceType>,
 }
 
-trait PositionTrait {
-    fn is_zero(self: Position) -> bool;
-    fn is_equal(self: Position, b: Position) -> bool;
+impl PieceOptionStoragSize of dojo::StorageSize<Option<PieceType>> {
+    #[inline(always)]
+    fn unpacked_size() -> usize {
+        2
+    }
+
+    #[inline(always)]
+    fn packed_size() -> usize {
+        256
+    }
 }
 
-impl PositionImpl of PositionTrait {
-    fn is_zero(self: Position) -> bool {
-        if self.x - self.y == 0 {
-            return true;
+#[derive(Serde, Drop, Copy, PartialEq)]
+enum PieceType {
+    WhitePawn,
+    WhiteKnight,
+    WhiteBishop,
+    WhiteRook,
+    WhiteQueen,
+    WhiteKing,
+    BlackPawn,
+    BlackKnight,
+    BlackBishop,
+    BlackRook,
+    BlackQueen,
+    BlackKing,
+}
+
+impl PieceTypeOptionPrintTrait of PrintTrait<Option<PieceType>> {
+    #[inline(always)]
+    fn print(self: Option<PieceType>) {
+        match self {
+            Option::Some(piece_type) => {
+                piece_type.print();
+            },
+            Option::None(_) => {
+                'None'.print();
+            }
         }
-        false
-    }
-
-    fn is_equal(self: Position, b: Position) -> bool {
-        self.x == b.x && self.y == b.y
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::{Position, PositionTrait};
+impl PieceTypePrintTrait of PrintTrait<PieceType> {
+    #[inline(always)]
+    fn print(self: PieceType) {
+        match self {
+            PieceType::WhitePawn(_) => {
+                'WhitePawn'.print();
+            },
+            PieceType::WhiteKnight(_) => {
+                'WhiteKnight'.print();
+            },
+            PieceType::WhiteBishop(_) => {
+                'WhiteBishop'.print();
+            },
+            PieceType::WhiteRook(_) => {
+                'WhiteRook'.print();
+            },
+            PieceType::WhiteQueen(_) => {
+                'WhiteQueen'.print();
+            },
+            PieceType::WhiteKing(_) => {
+                'WhiteKing'.print();
+            },
+            PieceType::BlackPawn(_) => {
+                'BlackPawn'.print();
+            },
+            PieceType::BlackKnight(_) => {
+                'BlackKnight'.print();
+            },
+            PieceType::BlackBishop(_) => {
+                'BlackBishop'.print();
+            },
+            PieceType::BlackRook(_) => {
+                'BlackRook'.print();
+            },
+            PieceType::BlackQueen(_) => {
+                'BlackQueen'.print();
+            },
+            PieceType::BlackKing(_) => {
+                'BlackKing'.print();
+            },
+        }
+    }
+}
 
-    #[test]
-    #[available_gas(100000)]
-    fn test_position_is_zero() {
-        let player = starknet::contract_address_const::<0x0>();
-        assert(PositionTrait::is_zero(Position { player, x: 0, y: 0 }), 'not zero');
+#[derive(Serde, Drop, Copy, PartialEq)]
+enum Color {
+    White,
+    Black,
+}
+
+impl ColorPrintTrait of PrintTrait<Color> {
+    #[inline(always)]
+    fn print(self: Color) {
+        match self {
+            Color::White(_) => {
+                'White'.print();
+            },
+            Color::Black(_) => {
+                'Black'.print();
+            },
+        }
+    }
+}
+
+impl ColorOptionPrintTrait of PrintTrait<Option<Color>> {
+    #[inline(always)]
+        fn print(self: Option<Color>) {
+        match self {
+            Option::Some(color_type) => {
+                color_type.print();
+            },
+            Option::None(_) => {
+                'None'.print();
+            }
+        }
+    }
+}
+
+
+#[derive(Component, Drop, SerdeLen, Serde)]
+struct Game {
+    /// game id, computed as follows pedersen_hash(player1_address, player2_address)
+    #[key]
+    game_id: felt252,
+    winner: Option<Color>,
+    white: ContractAddress,
+    black: ContractAddress
+}
+
+#[derive(Component, Drop, SerdeLen, Serde)]
+struct GameTurn {
+    #[key]
+    game_id: felt252,
+    turn: Color
+}
+
+//Assigning storage types for enum
+impl GameTurnOptionColorStorageSize of dojo::StorageSize<Color> {
+    #[inline(always)]
+    fn unpacked_size() -> usize {
+        1
     }
 
-    #[test]
-    #[available_gas(100000)]
-    fn test_position_is_equal() {
-        let player = starknet::contract_address_const::<0x0>();
-        let position = Position { player, x: 420, y: 0 };
-        assert(PositionTrait::is_equal(position, Position { player, x: 420, y: 0 }), 'not equal');
+    #[inline(always)]
+    fn packed_size() -> usize {
+        256
+    }
+}
+
+impl GameOptionColorStorageSize of dojo::StorageSize<Option<Color>> {
+    #[inline(always)]
+    fn unpacked_size() -> usize {
+        1
+    }
+
+    #[inline(always)]
+    fn packed_size() -> usize {
+        256
+    }
+}
+
+impl BoardPrintTrait of PrintTrait<(u32, u32)> {
+    #[inline(always)]
+    fn print(self: (u32, u32)) {
+        let (x, y): (u32, u32) = self;
+        x.print();
+        y.print();
     }
 }
